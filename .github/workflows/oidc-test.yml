@@ -1,0 +1,57 @@
+name: Terraform Plan (OIDC test)
+
+on:
+  workflow_dispatch: {}
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  id-token: write    # required for GitHub OIDC
+  contents: read
+
+env:
+  AWS_REGION: eu-west-3
+  TF_VERSION: 1.8.7
+  TF_WORKING_DIR: ./terraform/oidc
+  BACKEND_BUCKET: tfstate-zama-shop-paris
+  BACKEND_DYNAMO_TABLE: zama-shop
+  BACKEND_KEY: envs/dev/terraform.tfstate
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ACC_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify caller identity
+        run: aws sts get-caller-identity
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform init (S3 backend)
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init \
+            -backend-config="bucket=${BACKEND_BUCKET}" \
+            -backend-config="key=${BACKEND_KEY}" \
+            -backend-config="region=${AWS_REGION}" \
+            -backend-config="dynamodb_table=${BACKEND_DYNAMO_TABLE}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform plan -input=false -no-color
