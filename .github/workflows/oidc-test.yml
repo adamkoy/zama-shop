@@ -13,9 +13,7 @@ env:
   AWS_REGION: eu-west-3
   TF_VERSION: 1.8.7
   TF_WORKING_DIR: ./terraform/oidc
-  BACKEND_BUCKET: tfstate-zama-shop-paris
-  BACKEND_DYNAMO_TABLE: zama-shop
-  BACKEND_KEY: envs/dev/terraform.tfstate
+
 
 jobs:
   plan:
@@ -37,16 +35,6 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Terraform init (S3 backend)
-        working-directory: ${{ env.TF_WORKING_DIR }}
-        run: |
-          terraform init \
-            -backend-config="bucket=${BACKEND_BUCKET}" \
-            -backend-config="key=${BACKEND_KEY}" \
-            -backend-config="region=${AWS_REGION}" \
-            -backend-config="dynamodb_table=${BACKEND_DYNAMO_TABLE}" \
-            -backend-config="encrypt=true"
 
       - name: Terraform validate
         working-directory: ${{ env.TF_WORKING_DIR }}

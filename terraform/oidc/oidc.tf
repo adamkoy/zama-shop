@@ -37,8 +37,8 @@ data "aws_iam_policy_document" "github_trust" {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
       values = [
-        "repo:adamkoy/zama-pet-shop:*",
-        "repo:adamkoy/zama-pet-shop:ref:refs/heads/main",
+        "repo:adamkoy/zama-shop:*",
+        "repo:adamkoy/zama-shop:ref:refs/heads/main",
       ]
     }
   }
