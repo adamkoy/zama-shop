@@ -1,0 +1,71 @@
+openapi: 3.0.3
+info:
+  title: Minimal Mock
+  version: 1.0.0
+servers:
+  - url: http://localhost:4010
+paths:
+  /healthz:
+    get:
+      summary: Health check
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok]  # lock it to "ok"
+              example:
+                status: ok
+
+  /pets:
+    get:
+      summary: List pets
+      responses:
+        '200':
+          description: A list of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:   { type: integer }
+                    name: { type: string }
+              examples:
+                sample:
+                  value:
+                    - { id: 1, name: "Primate Encryption" }
+                    - { id: 2, name: "OctoZama" }
+
+    post:
+      summary: Create pet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:   { type: integer }
+                  name: { type: string }
+              examples:
+                created:
+                  value: { id: 123, name: "Sheepcryption" }
