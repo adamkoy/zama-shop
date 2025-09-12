@@ -41,3 +41,16 @@ variable "use_private_subnets" {
   type        = bool
   default     = false
 }
+
+# --- ECS inputs ---
+variable "container_port" {
+  type    = number
+  default = 4010
+  description = "Container port exposed by the Prism mock server."
+}
+
+variable "image_uri" {
+  type        = string
+  description = "ECR image URI for the Prism image"
+  default = "717916807684.dkr.ecr.eu-west-1.amazonaws.com/zama-shop:latest"
+}
