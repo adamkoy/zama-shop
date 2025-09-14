@@ -1,12 +1,12 @@
 
 # Account variables
 variable "region" {
-  type = string
+  type    = string
   default = "eu-west-3"
 }
 
 variable "account_id" {
-  type = string
+  type    = string
   default = "717916807684"
 }
 
@@ -44,13 +44,18 @@ variable "use_private_subnets" {
 
 # --- ECS inputs ---
 variable "container_port" {
-  type    = number
-  default = 4010
+  type        = number
+  default     = 4010
   description = "Container port exposed by the Prism mock server."
 }
 
 variable "image_uri" {
   type        = string
   description = "ECR image URI for the Prism image"
-  default = "717916807684.dkr.ecr.eu-west-1.amazonaws.com/zama-shop:latest"
+  default     = "717916807684.dkr.ecr.eu-west-1.amazonaws.com/zama-shop:latest"
+}
+variable "ssm_api_key_name" {
+  description = "SSM parameter name for the API key"
+  type        = string
+  default     = "/zama/api_key"
 }
