@@ -1,6 +1,5 @@
-############################
 # Account / Env
-############################
+
 variable "region" {
   description = "AWS region for all resources."
   type        = string
@@ -25,9 +24,7 @@ variable "environment" {
   default     = "dev"
 }
 
-############################
-# VPC (if you create a new one)
-############################
+# VPC 
 variable "vpc_cidr" {
   description = "CIDR for the new VPC."
   type        = string
@@ -52,9 +49,8 @@ variable "use_private_subnets" {
   default     = false
 }
 
-############################
 # ECS / Image
-############################
+
 variable "ecs_container_name" {
   description = "Primary container name in the ECS task definition."
   type        = string
@@ -74,30 +70,20 @@ variable "image_uri" {
   default = "717916807684.dkr.ecr.eu-west-3.amazonaws.com/zama-shop:latest"
 }
 
-############################
 # API Gateway / Security
-############################
-variable "ssm_api_key_name" {
-  description = "SSM parameter (SecureString) name that stores the API key value."
-  type        = string
-  default     = "/zama-shop/api_key"
-}
 
+variable "ssm_api_key_name" {
+  description = "SSM parameter name for the API key"
+  type        = string
+  default     = "/zama/api_key"
+}
 variable "waf_rate_limit" {
   description = "Max requests per 5 minutes per IP before WAF blocks."
   type        = number
-  default     = 5000
+  default     = 10
 }
 
-
-############################
-# POC Quiet Mode (APIGW deploy churn control)
-############################
-variable "poc_quiet" {
-  description = "Silence API Gateway deployment churn during POC."
-  type        = bool
-  default     = true
-}
+# APIGW
 
 variable "apigw_redeploy_seed" {
   description = "Bump this string when you WANT a redeploy (even in quiet mode)."
@@ -105,9 +91,8 @@ variable "apigw_redeploy_seed" {
   default     = ""
 }
 
-############################
 # Tags
-############################
+
 variable "tags" {
   description = "Common tags applied to supported resources."
   type        = map(string)
@@ -116,4 +101,17 @@ variable "tags" {
     ManagedBy   = "terraform"
     Environment = "dev"
   }
+}
+
+
+variable "sns_topic_arn" {
+  description = "Existing SNS topic ARN to use for alerts (leave null to create one)."
+  type        = string
+  default     = null
+}
+
+variable "alert_email" {
+  description = "Optional email address to subscribe to the alerts topic."
+  type        = string
+  default     = null
 }
