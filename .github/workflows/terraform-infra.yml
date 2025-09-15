@@ -24,7 +24,7 @@ permissions:
 
 env:
   AWS_REGION: eu-west-3
-  TF_VERSION: 1.8.7
+  TF_VERSION: 1.13.0 
   TF_WORKING_DIR: ./terraform/infra           # <-- set to your TF folder
 
 concurrency:
