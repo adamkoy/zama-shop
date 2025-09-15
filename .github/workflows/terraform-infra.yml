@@ -1,0 +1,158 @@
+name: Terraform Infra (plan/apply + API tests)
+
+on:
+  pull_request:
+    branches: [ main ]            
+  push:
+    branches: [ main ] 
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Terraform action
+        type: choice
+        options: [plan, apply]
+        default: plan
+      environment:
+        description: GitHub Environment
+        type: choice
+        options: [dev, prod]
+        default: dev
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: eu-west-3
+  TF_VERSION: 1.8.7
+  TF_WORKING_DIR: ./terraform/infra           # <-- set to your TF folder
+
+concurrency:
+  group: tf-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: ${{ github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'plan') }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ACC_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform fmt & validate
+        run: |
+          terraform fmt -check -recursive
+          terraform validate
+
+      - name: Terraform plan
+        run: terraform plan -input=false -no-color -out=tfplan
+
+      - name: Upload plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ env.TF_WORKING_DIR }}/tfplan
+
+  apply:
+    if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'apply') }}
+    runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'workflow_dispatch' && inputs.environment || 'dev' }}
+    defaults:
+      run:
+        working-directory: ${{ env.TF_WORKING_DIR }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ACC_ROLE }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform plan (visibility)
+        run: terraform plan -input=false -no-color
+
+      - name: Terraform apply
+        run: terraform apply -input=false -auto-approve
+
+      # ---- API TESTS ----
+      - name: Fetch API outputs
+        id: tfout
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT_JSON=$(terraform output -json)
+          API=$(jq -r '.api_url.value // .api_base_url.value // .api_endpoint.value // empty' <<<"$OUT_JSON")
+          KEY=$(jq -r '.api_key.value // .apiKey.value // empty' <<<"$OUT_JSON")
+
+          if [ -z "$API" ]; then
+            echo "API endpoint not found in outputs (looked for api_url/api_base_url/api_endpoint)"; exit 1
+          fi
+          # ensure single trailing slash
+          [[ "$API" =~ /$ ]] || API="${API}/"
+
+          echo "::add-mask::$KEY"
+          echo "api=$API" >> "$GITHUB_OUTPUT"
+          echo "key=$KEY" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for API to be ready
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="${{ steps.tfout.outputs.api }}"
+          echo "Waiting for ${API}healthz ..."
+          for i in {1..60}; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${API}healthz" || true)
+            if [ "$code" = "200" ]; then
+              echo "API is ready"; exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become ready in time"; exit 1
+
+      - name: API smoke tests (print + assert)
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="${{ steps.tfout.outputs.api }}"
+          KEY="${{ steps.tfout.outputs.key }}"
+
+          echo "---- curl -i ${API}healthz"
+          curl -i "${API}healthz"
+          echo "Assert healthz 200"
+          test "$(curl -s -o /dev/null -w "%{http_code}" "${API}healthz")" = "200"
+
+          echo "---- curl -i (no key) ${API}pets"
+          curl -i "${API}pets" || true
+          echo "Assert /pets without key -> 403"
+          test "$(curl -s -o /dev/null -w "%{http_code}" "${API}pets")" = "403"
+
+          echo "---- curl -i (with key) ${API}pets"
+          curl -i -H "x-api-key: ${KEY}" "${API}pets"
+          echo "Assert /pets with key -> 200"
+          test "$(curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: ${KEY}" "${API}pets")" = "200"
