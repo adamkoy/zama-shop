@@ -38,6 +38,8 @@ resource "aws_ecs_service" "svc" {
   task_definition = aws_ecs_task_definition.svc.arn
   desired_count   = 1
   launch_type     = "FARGATE"
+  # Allow the app time to come up before failing health checks
+  health_check_grace_period_seconds = 60
 
   network_configuration {
     subnets          = local.ecs_subnets
@@ -50,6 +52,14 @@ resource "aws_ecs_service" "svc" {
     container_name   = "prism"
     container_port   = var.container_port
   }
+  
+  deployment_circuit_breaker {
+    enable   = true # auto rollback on failed deployment
+    rollback = true
+  }
 
-  depends_on = [aws_lb_listener.http]
+  # A safe rolling update; tweak to your needs
+  deployment_minimum_healthy_percent = 100
+  deployment_maximum_percent         = 200
+  depends_on                         = [aws_lb_listener.http]
 }

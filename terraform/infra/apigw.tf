@@ -83,8 +83,9 @@ resource "aws_api_gateway_integration" "proxy_any" {
 resource "aws_api_gateway_deployment" "dep" {
   count       = local.enable_apigw ? 1 : 0
   rest_api_id = aws_api_gateway_rest_api.api[0].id
-  triggers    = { redeploy = timestamp() }
-
+  triggers = {
+    redeployment = sha1(jsonencode(aws_api_gateway_rest_api.api[0].body))
+  }
   depends_on = [
     aws_api_gateway_integration.healthz_proxy,
     aws_api_gateway_integration.proxy_any
@@ -100,13 +101,17 @@ resource "aws_api_gateway_stage" "prod" {
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.apigw_access[0].arn
     format = jsonencode({
-      requestId      = "$context.requestId",
-      ip             = "$context.identity.sourceIp",
-      httpMethod     = "$context.httpMethod",
-      resourcePath   = "$context.resourcePath",
-      status         = "$context.status",
-      responseLength = "$context.responseLength",
-      integrationLat = "$context.integration.latency"
+      requestId          = "$context.requestId",
+      requestTime        = "$context.requestTime",
+      httpMethod         = "$context.httpMethod",
+      path               = "$context.path",
+      status             = "$context.status",
+      integrationStatus  = "$context.integrationStatus",
+      integrationError   = "$context.integrationErrorMessage",
+      responseLatency    = "$context.responseLatency",
+      integrationLatency = "$context.integrationLatency",
+      ip                 = "$context.identity.sourceIp",
+      userAgent          = "$context.identity.userAgent"
     })
   }
   depends_on = [
