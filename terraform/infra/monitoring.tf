@@ -37,7 +37,7 @@ resource "aws_cloudwatch_metric_alarm" "apigw_5xx_rate" {
     id = "m1"
     metric {
       namespace   = "AWS/ApiGateway"
-      metric_name = "5XXError" # REST metric name
+      metric_name = "5XXError" 
       period      = 60
       stat        = "Sum"
       dimensions = {
