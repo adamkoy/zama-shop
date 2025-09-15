@@ -71,7 +71,7 @@ variable "image_uri" {
   description = "ECR image URI (must match account_id and region)."
   type        = string
   # NOTE: region aligned with eu-west-3
-  default     = "717916807684.dkr.ecr.eu-west-3.amazonaws.com/zama-shop:latest"
+  default = "717916807684.dkr.ecr.eu-west-3.amazonaws.com/zama-shop:latest"
 }
 
 ############################
