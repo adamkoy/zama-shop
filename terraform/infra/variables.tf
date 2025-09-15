@@ -59,3 +59,17 @@ variable "ssm_api_key_name" {
   type        = string
   default     = "/zama/api_key"
 }
+
+# --- Monitoring inputs ---
+
+variable "sns_topic_arn" {
+  description = "If set, alarms publish here. If null, we create our own topic."
+  type        = string
+  default     = null
+}
+
+variable "alert_email" {
+  description = "Optional email to subscribe to the created SNS topic."
+  type        = string
+  default     = null
+}

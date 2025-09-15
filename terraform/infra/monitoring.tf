@@ -1,22 +1,3 @@
-############################
-# SNS for alarms (flexible)
-############################
-# Option A: let this module create a topic (default)
-# Option B: pass an existing topic ARN via var.sns_topic_arn
-
-variable "sns_topic_arn" {
-  description = "If set, alarms publish here. If null, we create our own topic."
-  type        = string
-  default     = null
-}
-
-variable "alert_email" {
-  description = "Optional email to subscribe to the created SNS topic."
-  type        = string
-  default     = null
-}
-
-# Create a topic only if none provided
 resource "aws_sns_topic" "alerts" {
   count = var.sns_topic_arn == null ? 1 : 0
   name  = "${var.service_name}-alerts"
