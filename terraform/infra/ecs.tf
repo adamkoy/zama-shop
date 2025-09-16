@@ -52,7 +52,7 @@ resource "aws_ecs_service" "svc" {
     container_name   = "prism"
     container_port   = var.container_port
   }
-  
+
   deployment_circuit_breaker {
     enable   = true # auto rollback on failed deployment
     rollback = true
