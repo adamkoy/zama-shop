@@ -6,7 +6,7 @@ on:
       ref:
         description: "Branch or SHA to test (e.g. feature/my-branch)"
         required: true
-        default: main
+        default: infra-testing-apigateway
       mode:
         description: "Terraform action"
         type: choice
