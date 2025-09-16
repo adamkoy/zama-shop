@@ -59,3 +59,49 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           provenance: false
+          
+ # ---------- RUN & TEST ----------
+      - name: Start container
+        id: run_container
+        shell: bash
+        run: |
+          set -euo pipefail
+          IMAGE="${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO }}:dev-${{ github.event.pull_request.number }}-${{ github.sha }}"
+          docker pull "$IMAGE"
+          CID=$(docker run -d -p 4010:4010 "$IMAGE")
+          echo "cid=$CID" >> "$GITHUB_OUTPUT"
+
+          # Wait for health
+          for i in {1..30}; do
+            if curl -fsS http://localhost:4010/healthz | jq -e '.status=="ok"' >/dev/null 2>&1; then
+              echo "Service healthy"; exit 0
+            fi
+            sleep 1
+          done
+          echo "Service failed to become healthy"
+          docker logs "$CID" || true
+          exit 1
+
+      - name: Integration tests (print + assert)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          echo "------ curl -i /healthz"
+          curl -i http://localhost:4010/healthz
+
+          echo "Asserting /healthz.status == ok"
+          curl -fsS http://localhost:4010/healthz | jq -e '.status=="ok"'
+
+          echo "------ curl -i /pets"
+          curl -i http://localhost:4010/pets
+
+          echo "Asserting /pets is array (prefer named example, fallback)"
+          (curl -fsS -H 'Prefer: example=sample' http://localhost:4010/pets || curl -fsS http://localhost:4010/pets) \
+            | jq -e 'type=="array" and length>=1'
+
+      - name: Stop container
+        if: always()
+        run: |
+          docker logs ${{ steps.run_container.outputs.cid }} || true
+          docker stop ${{ steps.run_container.outputs.cid }} || true
