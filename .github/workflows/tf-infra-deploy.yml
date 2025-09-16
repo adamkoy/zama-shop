@@ -107,7 +107,7 @@ jobs:
           set -euo pipefail
           OUT_JSON=$(terraform output -json)
           API=$(jq -r '.api_url.value // .api_base_url.value // .api_endpoint.value // empty' <<<"$OUT_JSON")
-          KEY=$(jq -r '.api_key.value // .apiKey.value // empty' <<<"$OUT_JSON")
+          KEY=${{ secrets.API_KEY }}
 
           if [ -z "$API" ]; then
             echo "API endpoint not found in outputs (looked for api_url/api_base_url/api_endpoint)"; exit 1
