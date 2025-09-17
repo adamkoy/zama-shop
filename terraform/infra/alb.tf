@@ -10,16 +10,22 @@ resource "aws_lb" "nlb" {
 resource "aws_lb_target_group" "nlb_tg" {
   name        = "${var.service_name}-nlb-tg"
   port        = var.container_port
-  protocol    = "TCP"
+  protocol    = "TCP"          # data traffic stays TCP
   target_type = "ip"
   vpc_id      = module.vpc.vpc_id
 
-  # Keep HC at L4 for NLB
   health_check {
-    protocol = "TCP"
-    port     = "traffic-port"
+    protocol            = "HTTP"
+    port                = "traffic-port"   # or var.container_port
+    path                = "/healthz"
+    matcher             = "200-399"
+    interval            = 15
+    timeout             = 6
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
   }
 }
+
 
 # --- NLB Listener ---
 resource "aws_lb_listener" "tcp_80" {
