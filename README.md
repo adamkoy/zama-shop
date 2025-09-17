@@ -8,6 +8,7 @@
   - [Table of contents](#table-of-contents)
   - [Introduction](#introduction)
     - [Directory overview](#directory-overview)
+  - [Architecture](#architecture)
     - [State \& environments](#state--environments)
   - [Usage](#usage)
     - [Prerequisites](#prerequisites)
@@ -26,7 +27,8 @@
 
 ## Introduction
 
-Terraform + Docker infra for **Zama Shop**.  
+Infrastructure for the **Zama Pet Shop** application. This repo packages the Docker image, Terraform code, and GitHub Actions pipelines (with smoke tests) to deploy and operate the service.
+
 It provisions:
 
 - **Networking**: VPC, subnets, security groups  
@@ -58,11 +60,13 @@ Workflows handle both `plan` and `apply` with automated smoke tests.
 
 ````
 
+## Architecture
+![Project Logo](./assets/zama-architecture.png)
+
 ### State & environments
 
 - Remote state backend (S3/DynamoDB) assumed  
-- Environments: `dev`, `prod` (handled via pipeline inputs)  
-- No workspaces in use
+- Environments: `dev` (only) (handled via pipeline inputs)  
 - SSM Parameter Store manually added - /zama/api_key
 
 ## Usage
@@ -137,9 +141,9 @@ aws logs tail "/ecs/zama-shop" --since 10m --follow
 
 ## Operate
 
-1. **Check health** endpoints
-2. **Inspect logs** (API GW + ECS/ALB)
-3. **Validate API key** if 403s on `/pets`
+1. **Health** /healthz should be 200; /pets → 403 (no key) / 200 (with key)
+2. **Inspect logs** check API GW access logs and ECS/ALB app logs
+3. **Validate API key** 403 on `/pets` → verify SSM key and usage plan binding
 4. **Recover**:
 
    * Roll forward: hotfix → PR → merge → pipeline applies
@@ -154,5 +158,3 @@ aws logs tail "/ecs/zama-shop" --since 10m --follow
 ## License
 
 Copyright © Zama-shop. All rights reserved.
-
-```
