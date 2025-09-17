@@ -46,7 +46,7 @@ resource "aws_wafv2_web_acl" "api" {
     statement {
       rate_based_statement {
         aggregate_key_type = "IP"
-        limit              = 10
+        limit              = 100
       }
     }
 
@@ -59,6 +59,6 @@ resource "aws_wafv2_web_acl" "api" {
 }
 
 resource "aws_wafv2_web_acl_association" "apigw" {
-  resource_arn = "arn:aws:apigateway:${var.region}::/restapis/${aws_api_gateway_rest_api.api[0].id}/stages/${aws_api_gateway_stage.prod[0].stage_name}"
+  resource_arn = "arn:aws:apigateway:${var.region}::/restapis/${aws_api_gateway_rest_api.api.id}/stages/${aws_api_gateway_stage.prod.stage_name}"
   web_acl_arn  = aws_wafv2_web_acl.api.arn
 }

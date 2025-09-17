@@ -1,4 +1,3 @@
-
 data "aws_availability_zones" "available" {}
 
 module "vpc" {
@@ -15,13 +14,14 @@ module "vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  # NAT only when using private subnets for ECS tasks
-  enable_nat_gateway = var.use_private_subnets
-  single_nat_gateway = var.use_private_subnets
+  # NAT only when using private subnets for ECS tasks (pull images, talk to logs/ECR, etc.)
+  enable_nat_gateway = var.use_private_subnets ? true : false
+  single_nat_gateway = var.use_private_subnets ? true : false
 }
 
-# Choose ECS subnets + public IP behavior based on the flag
+# What-if flags (drive private vs public behavior)
 locals {
-  ecs_subnets      = var.use_private_subnets ? module.vpc.private_subnets : module.vpc.public_subnets
+  subnets          = var.use_private_subnets ? module.vpc.private_subnets : module.vpc.public_subnets
   assign_public_ip = var.use_private_subnets ? false : true
+  vpc_cidr_block   = var.vpc_cidr
 }

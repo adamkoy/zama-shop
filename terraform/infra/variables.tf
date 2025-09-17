@@ -103,7 +103,6 @@ variable "tags" {
   }
 }
 
-
 variable "sns_topic_arn" {
   description = "Existing SNS topic ARN to use for alerts (leave null to create one)."
   type        = string
@@ -113,5 +112,5 @@ variable "sns_topic_arn" {
 variable "alert_email" {
   description = "Optional email address to subscribe to the alerts topic."
   type        = string
-  default     = null
+  default     = "example@mail.com"
 }
