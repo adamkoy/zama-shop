@@ -124,9 +124,9 @@ jobs:
         run: |
           set -euo pipefail
           API="${{ steps.tfout.outputs.api }}"
-          echo "Waiting for ${API}healthz ..."
+          echo "Waiting for ${API}/healthz ..."
           for i in {1..60}; do
-            code=$(curl -s -o /dev/null -w "%{http_code}" "${API}healthz" || true)
+            code=$(curl -s -o /dev/null -w "%{http_code}" "${API/echo }healthz" || true)
             if [ "$code" = "200" ]; then
               echo "API is ready"; exit 0
             fi
@@ -141,17 +141,17 @@ jobs:
           API="${{ steps.tfout.outputs.api }}"
           KEY="${{ steps.tfout.outputs.key }}"
 
-          echo "---- curl -i ${API}healthz"
+          echo "---- curl -i ${API}/healthz"
           curl -i "${API}healthz"
           echo "Assert healthz 200"
-          test "$(curl -s -o /dev/null -w "%{http_code}" "${API}healthz")" = "200"
+          test "$(curl -s -o /dev/null -w "%{http_code}" "${API}/healthz")" = "200"
 
           echo "---- curl -i (no key) ${API}pets"
           curl -i "${API}pets" || true
           echo "Assert /pets without key -> 403"
-          test "$(curl -s -o /dev/null -w "%{http_code}" "${API}pets")" = "403"
+          test "$(curl -s -o /dev/null -w "%{http_code}" "${API}/pets")" = "403"
 
           echo "---- curl -i (with key) ${API}pets"
           curl -i -H "x-api-key: ${KEY}" "${API}pets"
           echo "Assert /pets with key -> 200"
-          test "$(curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: ${KEY}" "${API}pets")" = "200"
+          test "$(curl -s -o /dev/null -w "%{http_code}" -H "x-api-key: ${KEY}" "${API}/pets")" = "200"
