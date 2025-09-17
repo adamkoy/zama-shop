@@ -33,11 +33,11 @@ resource "aws_iam_role_policy_attachment" "exec_logs" {
 
 # ---------- Service ----------
 resource "aws_ecs_service" "svc" {
-  name               = "${var.service_name}-svc"
-  cluster            = aws_ecs_cluster.this.id
-  task_definition    = aws_ecs_task_definition.svc.arn
-  desired_count      = 1
-  launch_type        = "FARGATE"
+  name            = "${var.service_name}-svc"
+  cluster         = aws_ecs_cluster.this.id
+  task_definition = aws_ecs_task_definition.svc.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
   # Allow the app time to come up before failing health checks
   health_check_grace_period_seconds = 60
 

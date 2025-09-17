@@ -22,7 +22,7 @@ module "vpc" {
 
 # Choose ECS subnets + public IP behavior based on the flag
 locals {
-  subnets          = module.vpc.private_subnets 
-  assign_public_ip =  false
+  subnets          = module.vpc.private_subnets
+  assign_public_ip = false
   vpc_cidr_block   = var.vpc_cidr
 }

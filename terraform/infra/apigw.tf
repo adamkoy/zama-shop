@@ -14,7 +14,7 @@ resource "aws_cloudwatch_log_group" "apigw_access" {
 }
 
 resource "aws_api_gateway_rest_api" "api" {
-  name  = "${var.service_name}-gw"
+  name = "${var.service_name}-gw"
 }
 
 # /healthz (open)
@@ -51,19 +51,19 @@ resource "aws_api_gateway_method" "proxy_any" {
 }
 
 resource "aws_api_gateway_integration" "healthz_proxy" {
-  rest_api_id             = aws_api_gateway_rest_api.api.id
-  resource_id             = aws_api_gateway_resource.healthz.id
-  http_method             = aws_api_gateway_method.healthz_get.http_method
+  rest_api_id = aws_api_gateway_rest_api.api.id
+  resource_id = aws_api_gateway_resource.healthz.id
+  http_method = aws_api_gateway_method.healthz_get.http_method
 
   type                    = "HTTP_PROXY"
   integration_http_method = "GET"
 
   # private connectivity
-  connection_type         = "VPC_LINK"
-  connection_id           = aws_api_gateway_vpc_link.link.id
+  connection_type = "VPC_LINK"
+  connection_id   = aws_api_gateway_vpc_link.link.id
 
   # NLB DNS (internal)
-  uri                     = "http://${aws_lb.nlb.dns_name}/healthz"
+  uri = "http://${aws_lb.nlb.dns_name}/healthz"
 }
 
 resource "aws_api_gateway_integration" "proxy_any" {
@@ -73,8 +73,8 @@ resource "aws_api_gateway_integration" "proxy_any" {
   type                    = "HTTP_PROXY"
   integration_http_method = "ANY"
 
-  connection_type         = "VPC_LINK"
-  connection_id           = aws_api_gateway_vpc_link.link.id
+  connection_type = "VPC_LINK"
+  connection_id   = aws_api_gateway_vpc_link.link.id
 
   uri = "http://${aws_lb.nlb.dns_name}/{proxy}"
 
@@ -155,7 +155,7 @@ resource "aws_api_gateway_api_key" "key" {
 }
 
 resource "aws_api_gateway_usage_plan" "plan" {
-  name  = "${var.service_name}-plan"
+  name = "${var.service_name}-plan"
 
   throttle_settings {
     burst_limit = 5

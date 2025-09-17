@@ -10,13 +10,13 @@ resource "aws_lb" "nlb" {
 resource "aws_lb_target_group" "nlb_tg" {
   name        = "${var.service_name}-nlb-tg"
   port        = var.container_port
-  protocol    = "TCP"          # data traffic stays TCP
+  protocol    = "TCP" # data traffic stays TCP
   target_type = "ip"
   vpc_id      = module.vpc.vpc_id
 
   health_check {
     protocol            = "HTTP"
-    port                = "traffic-port"   # or var.container_port
+    port                = "traffic-port" # or var.container_port
     path                = "/healthz"
     matcher             = "200-399"
     interval            = 15

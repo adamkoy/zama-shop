@@ -1,5 +1,5 @@
 resource "aws_sns_topic" "alerts" {
-  name  = "${var.service_name}-alerts"
+  name = "${var.service_name}-alerts"
 }
 
 # Optional email subscription (only if you provide alert_email)
@@ -23,8 +23,8 @@ resource "aws_cloudwatch_metric_alarm" "apigw_5xx_rate" {
   evaluation_periods  = 5
   datapoints_to_alarm = 3
   treat_missing_data  = "notBreaching"
-  alarm_actions = [aws_sns_topic.alerts.arn]
-  ok_actions    = [aws_sns_topic.alerts.arn]
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
 
   # m1: REST 5XX errors
   metric_query {
