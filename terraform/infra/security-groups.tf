@@ -8,7 +8,7 @@ resource "aws_security_group" "alb" {
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    cidr_blocks = [local.vpc_cidr_block]
   }
 
   egress {
@@ -25,11 +25,11 @@ resource "aws_security_group" "tasks" {
   vpc_id = module.vpc.vpc_id
 
   ingress {
-    description     = "Only ALB can reach tasks"
-    from_port       = var.container_port
-    to_port         = var.container_port
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    description = "Only ALB can reach tasks"
+    from_port   = var.container_port
+    to_port     = var.container_port
+    protocol    = "tcp"
+    cidr_blocks = module.vpc.private_subnets_cidr_blocks
   }
 
   egress {

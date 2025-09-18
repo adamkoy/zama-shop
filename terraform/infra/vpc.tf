@@ -16,12 +16,13 @@ module "vpc" {
   enable_dns_support   = true
 
   # NAT only when using private subnets for ECS tasks
-  enable_nat_gateway = var.use_private_subnets
-  single_nat_gateway = var.use_private_subnets
+  enable_nat_gateway = true
+  single_nat_gateway = true
 }
 
 # Choose ECS subnets + public IP behavior based on the flag
 locals {
-  ecs_subnets      = var.use_private_subnets ? module.vpc.private_subnets : module.vpc.public_subnets
-  assign_public_ip = var.use_private_subnets ? false : true
+  subnets          = module.vpc.private_subnets
+  assign_public_ip = false
+  vpc_cidr_block   = var.vpc_cidr
 }

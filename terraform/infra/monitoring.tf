@@ -1,19 +1,12 @@
 resource "aws_sns_topic" "alerts" {
-  count = var.sns_topic_arn == null ? 1 : 0
-  name  = "${var.service_name}-alerts"
+  name = "${var.service_name}-alerts"
 }
 
 # Optional email subscription (only if you provide alert_email)
 resource "aws_sns_topic_subscription" "alerts_email" {
-  count     = var.alert_email == null ? 0 : 1
-  topic_arn = coalesce(var.sns_topic_arn, aws_sns_topic.alerts[0].arn)
+  topic_arn = coalesce(var.sns_topic_arn, aws_sns_topic.alerts.arn)
   protocol  = "email"
   endpoint  = var.alert_email
-}
-
-# Unified topic ARN to use below
-locals {
-  alarm_topic_arn = coalesce(var.sns_topic_arn, try(aws_sns_topic.alerts[0].arn, null))
 }
 
 ############################
@@ -30,7 +23,8 @@ resource "aws_cloudwatch_metric_alarm" "apigw_5xx_rate" {
   evaluation_periods  = 5
   datapoints_to_alarm = 3
   treat_missing_data  = "notBreaching"
-  alarm_actions       = local.alarm_topic_arn == null ? [] : [local.alarm_topic_arn]
+  alarm_actions       = [aws_sns_topic.alerts.arn]
+  ok_actions          = [aws_sns_topic.alerts.arn]
 
   # m1: REST 5XX errors
   metric_query {
@@ -41,8 +35,8 @@ resource "aws_cloudwatch_metric_alarm" "apigw_5xx_rate" {
       period      = 60
       stat        = "Sum"
       dimensions = {
-        ApiName = aws_api_gateway_rest_api.api[0].name
-        Stage   = aws_api_gateway_stage.prod[0].stage_name
+        ApiName = aws_api_gateway_rest_api.api.name
+        Stage   = aws_api_gateway_stage.prod.stage_name
       }
     }
   }
@@ -56,8 +50,8 @@ resource "aws_cloudwatch_metric_alarm" "apigw_5xx_rate" {
       period      = 60
       stat        = "Sum"
       dimensions = {
-        ApiName = aws_api_gateway_rest_api.api[0].name
-        Stage   = aws_api_gateway_stage.prod[0].stage_name
+        ApiName = aws_api_gateway_rest_api.api.name
+        Stage   = aws_api_gateway_stage.prod.stage_name
       }
     }
   }

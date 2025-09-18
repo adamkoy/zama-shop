@@ -1,35 +1,40 @@
-
-# ---------- ALB ----------
-resource "aws_lb" "this" {
-  name               = "${var.service_name}-alb"
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets            = module.vpc.public_subnets
+# --- Internal NLB (L4) ---
+resource "aws_lb" "nlb" {
+  name               = "${var.service_name}-nlb"
+  load_balancer_type = "network"
+  internal           = true
+  subnets            = module.vpc.private_subnets
 }
 
-resource "aws_lb_target_group" "this" {
-  name        = "${var.service_name}-tg"
+# --- NLB Target Group (TCP) ---
+resource "aws_lb_target_group" "nlb_tg" {
+  name        = "${var.service_name}-nlb-tg"
   port        = var.container_port
-  protocol    = "HTTP"
+  protocol    = "TCP" # data traffic stays TCP
   target_type = "ip"
   vpc_id      = module.vpc.vpc_id
 
   health_check {
+    protocol            = "HTTP"
+    port                = "traffic-port" # or var.container_port
     path                = "/healthz"
     matcher             = "200-399"
-    interval            = 30
+    interval            = 15
+    timeout             = 6
     healthy_threshold   = 2
     unhealthy_threshold = 3
   }
 }
 
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.this.arn
+
+# --- NLB Listener ---
+resource "aws_lb_listener" "tcp_80" {
+  load_balancer_arn = aws_lb.nlb.arn
   port              = 80
-  protocol          = "HTTP"
+  protocol          = "TCP"
 
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.this.arn
+    target_group_arn = aws_lb_target_group.nlb_tg.arn
   }
 }
