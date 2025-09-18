@@ -90,13 +90,12 @@ terraform apply tfplan
 ### Smoke test
 
 ```bash
-OUT=$(terraform output -json)
-API=$(jq -r '.api_url.value // .api_base_url.value' <<<"$OUT")
-KEY=<DUMMY API KEY OR FROM SSM PARAMTER STORE>
+API=$(terraform output -raw api_base_url)  
+KEY=<API KEY FROM SSM PARAMTER STORE>
 
-curl -i "${API%/}/healthz"                       # expect 200
-curl -i "${API%/}/pets"                          # expect 403
-curl -i -H "x-api-key: ${KEY}" "${API%/}/pets"   # expect 200
+curl -i "${API%}/healthz"                       # expect 200
+curl -i "${API%}/pets"                          # expect 403
+curl -i -H "x-api-key: ${KEY}" "${API%}/pets"   # expect 200
 ```
 
 ### Destroy
@@ -124,7 +123,7 @@ Actions → *Terraform Infra* → **Run workflow**
 
 * `plan` job always runs first
 * `apply (dev)` runs only after plan
-* `apply (prod)` requires approval
+* `apply (dev)` manual run
 
 ## Observe
 
