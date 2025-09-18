@@ -59,7 +59,7 @@ resource "aws_ecs_service" "svc" {
     rollback = true
   }
 
-  # A safe rolling update; tweak to your needs
+  # A safe rolling update
   deployment_minimum_healthy_percent = 100
   deployment_maximum_percent         = 200
   depends_on                         = [aws_lb_listener.tcp_80]

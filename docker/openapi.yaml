@@ -20,7 +20,7 @@ paths:
                 properties:
                   status:
                     type: string
-                    enum: [ok]  # lock it to "ok"
+                    enum: [ok]
               example:
                 status: ok
 
